@@ -1,0 +1,20 @@
+[
+    {
+        "reviewer_id": "gpt-3.5-turbo", 
+        "description": "GPT-3.5", 
+        "type": "OpenAI", 
+        "score-regex": "^([0-9]\\.*[0-9]*) *([0-9]\\.*[0-9]*)",
+        "params": {"apikey": "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","model": "gpt-3.5-turbo"}, 
+        "metadata": {"temperature": 0.2, "max_tokens": 1024}, 
+        "prompt_template": "We would like to request your feedback on the performance of two AI assistants in response to the user question displayed above.\nPlease rate the helpfulness, relevance, accuracy, level of details of their responses. Each assistant receives an overall score on a scale of 1 to 10, where a higher score indicates better overall performance.\nPlease first output a single line containing only two values indicating the scores for Assistant 1 and 2, respectively. The two scores are separated by a space. In the subsequent line, please provide a comprehensive explanation of your evaluation, avoiding any potential bias and ensuring that the order in which the responses were presented does not affect your judgment.\n[Question]\n{question}\n\n[The Start of Assistant 1's Answer]\n{answer_1}\n\n[The End of Assistant 1's Answer]\n\n[The Start of Assistant 2's Answer]\n{answer_2}\n\n[The End of Assistant 2's Answer]\n\n"
+    },
+    {
+        "reviewer_id": "oasst-sft-6-llama-30b-4bit-128g", 
+        "description": "OA", 
+        "type": "oobabooga-api", 
+        "score-regex": "Assistant 1[-: (]*([0-9]\\.*[0-9]*)[\/\n, 0-9]*[) ,]*Assistant 2[-: (]*([0-9]\\.*[0-9]*)", 
+        "params": {"oobabooga-server": "192.168.8.101:7860"}, 
+        "metadata": {"temperature": 0.2, "max_new_tokens": 100, "do_sample": true}, 
+        "prompt_template": "<|prompter|>We would like to request your feedback on the performance of two AI assistants in response to the user question displayed above.\nPlease rate the helpfulness, relevance, accuracy, level of details of their responses. Each assistant receives an overall score on a scale of 1 to 10, where a higher score indicates better overall performance.\nPlease first output a single line containing only two values indicating the scores for Assistant 1 and 2, respectively. The two scores are separated by a space. In the subsequent line, please provide a comprehensive explanation of your evaluation, avoiding any potential bias and ensuring that the order in which the responses were presented does not affect your judgment.\n[Question]\n{question}\n\n[The Start of Assistant 1's Answer]\n{answer_1}\n\n[The End of Assistant 1's Answer]\n\n[The Start of Assistant 2's Answer]\n{answer_2}\n\n[The End of Assistant 2's Answer]\n\n<|assistant|>"
+    }
+]
