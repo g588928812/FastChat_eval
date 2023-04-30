@@ -28,12 +28,17 @@ logger.addHandler(fileHandler)
 MAX_API_RETRY = 5
 REQ_TIME_GAP = 10
 
+oaikey = None
+
 def get_eval_OAI(reviewer, prompt: str, max_tokens: int):
     logging.basicConfig(level=logging.INFO)
+
+    assert(oaikey is not None)
+
     for i in range(MAX_API_RETRY):
         try:
 
-            openai.api_key = reviewer["params"]["apikey"]
+            openai.api_key = oaikey
 
             completion = openai.ChatCompletion.create(
               model=reviewer["params"]["model"],
@@ -144,6 +149,7 @@ if __name__ == "__main__":
     parser.add_argument("-rf", "--reviewer-file", default="table/reviewer.json")
     parser.add_argument("-r", "--reviewer", default="gpt-3.5-turbo")
     parser.add_argument("-o", "--output-review-file")
+    parser.add_argument("-k", "--openaikey", type=str)
     parser.add_argument(
         "--max-tokens",
         type=int,
@@ -152,6 +158,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    print("SDFDSF " + args.openaikey)
+    oaikey = args.openaikey
     question_jsons = import_json(args.question_file)
     reviewer_jsons = import_json(args.reviewer_file)
     answer1_jsons = get_json_list(args.answer_file_list[0])
