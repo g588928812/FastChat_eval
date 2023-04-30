@@ -28,8 +28,6 @@ logger.addHandler(fileHandler)
 MAX_API_RETRY = 5
 REQ_TIME_GAP = 10
 
-oaikey = "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"
-
 def get_eval_OAI(reviewer, prompt: str, max_tokens: int):
     logging.basicConfig(level=logging.INFO)
     for i in range(MAX_API_RETRY):
