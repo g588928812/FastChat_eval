@@ -21,7 +21,7 @@ logger = logging.getLogger()
 
 
 logger_logfn = "log_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-fileHandler = logging.FileHandler("{0}/{1}.log".format(".", logger_logfn))
+fileHandler = logging.FileHandler("{0}/{1}.log".format("./logs/", logger_logfn))
 fileHandler.setFormatter(logFormatter)
 logger.addHandler(fileHandler)
 
@@ -86,21 +86,6 @@ def get_eval_OOB(reviewer, prompt: str, max_tokens: int):
     logger.error(f"Failed after {MAX_API_RETRY} retries.")
     return "error"
 
-def parse_score2(review):
-    try:
-        score_pair = review.split("\n")[0]
-        score_pair = score_pair.replace(",", " ")
-        sp = score_pair.split(" ")
-        if len(sp) == 2:
-            return [float(sp[0]), float(sp[1])]
-        else:
-            raise Exception("Invalid score pair.")
-    except Exception as e:
-        logger.error(
-            f"{e}\nContent: {review}\n" "You must manually fix the score pair."
-        )
-        return [-1, -1]
-
 def parse_score(review, reviewer):
     try:
         regex = reviewer["score-regex"]
@@ -158,7 +143,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    print("SDFDSF " + args.openaikey)
     oaikey = args.openaikey
     question_jsons = import_json(args.question_file)
     reviewer_jsons = import_json(args.reviewer_file)
