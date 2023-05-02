@@ -37,7 +37,6 @@ def get_eval_OAI(reviewer, prompt: str, max_tokens: int):
 
     for i in range(MAX_API_RETRY):
         try:
-
             openai.api_key = oaikey
 
             completion = openai.ChatCompletion.create(
@@ -52,7 +51,7 @@ def get_eval_OAI(reviewer, prompt: str, max_tokens: int):
 
             content = completion.choices[0].message.content
 
-            logger.info(content)
+            # logger.info(content)
             return content
         except Exception as e:
             logger.error(e)
@@ -101,8 +100,8 @@ def parse_score(review, reviewer):
         )
         return [-1, -1]
 
-def gen_prompt(reviewer, ques, ans1, ans2):
-    prompt_template = reviewer["prompt_template"]
+def gen_prompt(reviewer, ques, cat, ans1, ans2):
+    prompt_template = reviewer["prompt_templates"][cat] if cat in reviewer["prompt_templates"] else reviewer["prompt_templates"]["default"]
 
     prompt = prompt_template.format(
         question=ques, answer_1=ans1, answer_2=ans2
@@ -135,6 +134,8 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--reviewer", default="gpt-3.5-turbo")
     parser.add_argument("-o", "--output-review-file")
     parser.add_argument("-k", "--openaikey", type=str)
+    parser.add_argument("-dr", "--do-repetitions", type=int, default=1)
+    parser.add_argument("-lc", "--limit-category", type=str, default=None)
     parser.add_argument(
         "--max-tokens",
         type=int,
@@ -164,56 +165,74 @@ if __name__ == "__main__":
     total_len = len(question_jsons)
     question_idx_list = list(range(total_len))
 
-    for i in question_idx_list:
-        assert (
-            answer1_jsons[i]["question_id"]
-            == question_jsons[i]["question_id"]
-            == answer2_jsons[i]["question_id"]
-        )
+    for rep in range(args.do_repetitions):
+        logger.info(f"Doing repetition {rep+1} of {args.do_repetitions}")
 
-        ques = question_jsons[i]["text"]
-        cat = question_jsons[i]["category"]
-        ans1 = answer1_jsons[i]["text"]
-        ans2 = answer2_jsons[i]["text"]
+        # for i in question_idx_list:
+        for i in range(10):
+            assert (
+                answer1_jsons[i]["question_id"]
+                == question_jsons[i]["question_id"]
+                == answer2_jsons[i]["question_id"]
+            )
 
-        prompt = gen_prompt(
-            reviewer, ques, ans1, ans2
-        )
+            ques = question_jsons[i]["text"]
+            cat = question_jsons[i]["category"]
+            ans1 = answer1_jsons[i]["text"]
+            ans2 = answer2_jsons[i]["text"]
+            model1 = answer1_jsons[i]["model_id"]
+            model2 = answer2_jsons[i]["model_id"]
 
-        if reviewer["type"] == "OpenAI":
-            review = get_eval_OAI( reviewer, prompt, args.max_tokens)
-        elif reviewer["type"] == "oobabooga-api" :
-            review = get_eval_OOB( reviewer, prompt, args.max_tokens)
-        else:            
-            logger.error("unknown reviewer type " + reviewer["type"])
-            quit()
+            if args.limit_category is not None:
+                logger.info(f"Limiting to category '{args.limit_category}'")
+                if cat != args.limit_category:
+                    continue
 
-        review_id = shortuuid.uuid()
-        review_jsons.append(
-            {
-                "review_id": review_id,
-                "question_id": question_jsons[i]["question_id"],
-                "answer1_id": answer1_jsons[i]["answer_id"],
-                "answer2_id": answer2_jsons[i]["answer_id"],
-                "reviewer_id": reviewer["reviewer_id"],
-                "metadata": reviewer["metadata"],
-                "text": review,
-                "scores": parse_score(review, reviewer)
-            }
-        )
+            prompt = gen_prompt(reviewer, ques, cat, ans1, ans2)
 
-        logger.info("Review for question {qid}, reviewer {reviewer}: {review}. Scores: A1: {s1}, A2 {s2}".format(
-            qid=question_jsons[i]["question_id"],
-            reviewer=reviewer["reviewer_id"],
-            review="",
-            s1=review_jsons[len(review_jsons)-1]["scores"][0],
-            s2=review_jsons[len(review_jsons)-1]["scores"][1]
-            ))
+            if reviewer["type"] == "OpenAI":
+                review = get_eval_OAI( reviewer, prompt, args.max_tokens)
+            elif reviewer["type"] == "oobabooga-api" :
+                review = get_eval_OOB( reviewer, prompt, args.max_tokens)
+            else:            
+                logger.error("unknown reviewer type " + reviewer["type"])
+                quit()
 
-        # To avoid the rate limit set by OpenAI
-        # logger.info(f"Waiting for {REQ_TIME_GAP} seconds before sending the next request.")
-        # time.sleep(REQ_TIME_GAP)
+            review_id = shortuuid.uuid()
+            review_jsons.append(
+                {
+                    "review_id": review_id,
+                    "question_id": question_jsons[i]["question_id"],
+                    "answer1_id": answer1_jsons[i]["answer_id"],
+                    "answer2_id": answer2_jsons[i]["answer_id"],
+                    "reviewer_id": reviewer["reviewer_id"],
+                    "metadata": reviewer["metadata"],
+                    "text": review,
+                    "scores": parse_score(review, reviewer)
+                }
+            )
 
-    with open(f"{args.output_review_file}", "w") as output_review_file:
-        for review in review_jsons:
-            output_review_file.write(json.dumps(review) + "\n")
+            # print("#### PROMPT " + prompt )
+            # print("#### REVIEW " + review )
+
+            logger.info("Review for question {qid}, {m1} vs. {m2}, reviewer {reviewer}. Scores: A1: {s1}, A2 {s2}. Review: {review}".format(
+                qid=question_jsons[i]["question_id"],
+                reviewer=reviewer["reviewer_id"],
+                review="",
+                s1=review_jsons[len(review_jsons)-1]["scores"][0],
+                s2=review_jsons[len(review_jsons)-1]["scores"][1],
+                m1=answer1_jsons[i]["model_id"],
+                m2=answer2_jsons[i]["model_id"]
+                ))
+
+            # To avoid the rate limit set by OpenAI
+            logger.info(f"Waiting for {REQ_TIME_GAP} seconds before sending the next request.")
+            # time.sleep(10)
+
+        outfn=args.output_review_file if rep==0 else args.output_review_file + "_" + str(rep)
+        outfn=outfn + ".jsonl"
+
+        logger.info(f"writing output of {model1} vs {model2} to file {outfn}")
+        with open(f"{outfn}", "w+") as output_review_file:
+            for review in review_jsons:
+                output_review_file.write(json.dumps(review) + "\n")
