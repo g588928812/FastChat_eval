@@ -39,71 +39,65 @@ def get_json_list(file_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ChatGPT-based QA evaluation.")
     parser.add_argument("-m", "--model", default=None)
-    parser.add_argument("-r", "--review-dir", default="table/review/vicuna-13b_20230322-clean-lang")
+    parser.add_argument("-r", "--review-dir", default=None)
+    parser.add_argument("-rf", "--review-file", default=None)
     parser.add_argument("-a", "--answer-dir", default="table/answer")
     args = parser.parse_args()
 
-    assert(args.model != None and args.review_dir != None and args.answer_dir != None)
+    assert((args.review_dir != None or args.review_file != None) and args.answer_dir != None)
 
-    reviews_json = get_json_list_dir(args.review_dir)
+    if args.review_file != None:
+        reviews_json = get_json_list(args.review_file)
+    else:
+        reviews_json = get_json_list_dir(args.review_dir)
+
     answers_json = get_json_list_dir(args.answer_dir)
     model=args.model
 
-    wins={"overall": 0}
-    ties={"overall": 0}
-    total_comparisons={"overall": 0}
+    model_scores={}
+    # wins={"overall": 0}
+    # ties={"overall": 0}
+    # total_comparisons={"overall": 0}
     for i in range(len(reviews_json)):
-        answer1 = next(item for item in answers_json if item["answer_id"] == reviews_json[i]["answer1_id"])
-        answer2 = next(item for item in answers_json if item["answer_id"] == reviews_json[i]["answer2_id"])
-        
-        if(answer1["model_id"] != model and answer2["model_id"] != model):
-            continue
-
-        answer_model = answer1 if answer1["model_id"] == model else answer2
-        answer_competitor = answer2 if answer1["model_id"] == model else answer1
-        competitor=answer_competitor["model_id"]
-
+        answers=[]
+        answers.append(next(item for item in answers_json if item["answer_id"] == reviews_json[i]["answer1_id"]))
+        answers.append(next(item for item in answers_json if item["answer_id"] == reviews_json[i]["answer2_id"]))
         scores = reviews_json[i]["scores"]
 
-        if scores[0]==scores[1]:
-            winner = None 
+        for f in [0,1]:
+            answer=answers[f]
+            if not answer["model_id"] in model_scores:
+                model_scores[answer["model_id"]]={
+                    "wins":0, "ties":0, "overall":0
+                }        
+            model_scores[answer["model_id"]]["overall"]+=1
+
+        if scores[0] == scores[1]:
+            model_scores[answers[0]["model_id"]]["ties"]+=1
+            model_scores[answers[1]["model_id"]]["ties"]+=1
         else:
-            winner = answer1["model_id"] if scores[0]>scores[1] else answer2["model_id"]
+            if scores[0] > scores[1]:
+                model_scores[answers[0]["model_id"]]["wins"]+=1
+            else:
+                model_scores[answers[1]["model_id"]]["wins"]+=1
 
-        if not competitor in wins:
-            wins[competitor]=0
-        if not competitor in ties:
-            ties[competitor]=0
-        if not competitor in total_comparisons:
-            total_comparisons[competitor]=0
+        # print("Review #{i}/{total}: {model1} ({score1}) versus {model2} ({score2})".format(
+        #     i=i,
+        #     total=len(reviews_json),
+        #     model1=answers[0]["model_id"],
+        #     model2=answers[1]["model_id"],
+        #     score1=scores[0],
+        #     score2=scores[1]
+        #     ))
 
-        if model == winner:
-            wins[competitor]=wins[competitor]+1 
-            wins["overall"]=wins["overall"]+1
-        elif winner == None:
-            ties[competitor]=ties[competitor]+1 
-            ties["overall"]=ties["overall"]+1
-        total_comparisons[competitor]=total_comparisons[competitor]+1 
-        total_comparisons["overall"]=total_comparisons["overall"]+1
-
-        print("Review #{i}/{total}: {model1} ({score1}) versus {model2} ({score2}): {winner}".format(
-            i=i,
-            total=len(reviews_json),
-            model1=answer1["model_id"],
-            model2=answer2["model_id"],
-            score1=reviews_json[i]["scores"][0],
-            score2=reviews_json[i]["scores"][1],
-            winner=winner
-            ))
-
-    for competitor in total_comparisons:
-        print("Model {model} against {competitor}: {rate}% ({wins}/{total}), ties: {ties}".format(
+    for model in model_scores:
+        # print(f"Model {model}")
+        print("Model {model}: {rate}% ({wins}/{total}), ties: {ties}".format(
             model=model,
-            competitor=competitor,
-            wins=wins[competitor],
-            ties=ties[competitor] if competitor in ties else 0,
-            rate=wins[competitor]/total_comparisons[competitor]*100,
-            total=total_comparisons[competitor]
+            wins=model_scores[model]["wins"],
+            ties=model_scores[model]["ties"],
+            rate=model_scores[model]["wins"]/model_scores[model]["overall"]*100,
+            total=model_scores[model]["overall"]
             ))
 
     # print("Model {model} OVERALL: {rate}% ({wins}/{total}), ties: {ties}".format(

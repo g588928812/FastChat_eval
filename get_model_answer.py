@@ -1,98 +1,137 @@
 import argparse
-from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM
-import torch
 import os
 import json
-from tqdm import tqdm
 import shortuuid
-import ray
+import logging
+import requests
+from tqdm import tqdm
 
-from fastchat.conversation import get_default_conv_template, compute_skip_echo_len
-from fastchat.utils import disable_torch_init
+from datetime import datetime
 
+logging.basicConfig(level=logging.INFO)
 
-def run_eval(model_path, model_id, question_file, answer_file, num_gpus):
-    # split question file into num_gpus files
-    ques_jsons = []
-    with open(os.path.expanduser(question_file), "r") as ques_file:
-        for line in ques_file:
-            ques_jsons.append(line)
+logFormatter = logging.Formatter("%(asctime)s %(message)s")
+logger = logging.getLogger()
 
-    chunk_size = len(ques_jsons) // num_gpus
-    ans_handles = []
-    for i in range(0, len(ques_jsons), chunk_size):
-        ans_handles.append(
-            get_model_answers.remote(
-                model_path, model_id, ques_jsons[i : i + chunk_size]
-            )
-        )
+logger_logfn = "log_getModelAnswer_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+fileHandler = logging.FileHandler("{0}/{1}.log".format("./logs/", logger_logfn))
+fileHandler.setFormatter(logFormatter)
+logger.addHandler(fileHandler)
 
+oaikey = None
+
+def import_json(file_path):
+    file_path = os.path.expanduser(file_path)
+    f = open(file_path)
+    data = json.load(f)
+    f.close()
+
+    return data
+
+def run_eval(model_id, model_file, question_file, answer_file):
+    models_jsons = import_json(model_file)
+
+    models = list(filter(lambda models_jsons: models_jsons['model_id'] == model_id, models_jsons))
+
+    if(len(models)==0):
+        logger.error(f"model {model_id} not found in {model_file}")
+        quit()
+    else:
+        model=models[0]
+
+    logger.info(f"Model: {model_id}")
+
+    ques_jsons = import_json(question_file)
     ans_jsons = []
-    for ans_handle in ans_handles:
-        ans_jsons.extend(ray.get(ans_handle))
+
+    for i in range(len(ques_jsons)):
+        logger.info(f"Question {i+1}/{len(ques_jsons)}")
+        answer=get_model_answer(model, ques_jsons[i])
+        ans_jsons.append(answer)
+
+    logger.info(f"Writing answers to file {os.path.expanduser(answer_file)}")
 
     with open(os.path.expanduser(answer_file), "w") as ans_file:
         for line in ans_jsons:
             ans_file.write(json.dumps(line) + "\n")
 
+def askOpenAI(model, question):
+    assert(oaikey is not None)
 
-@ray.remote(num_gpus=1)
-@torch.inference_mode()
-def get_model_answers(model_path, model_id, question_jsons):
-    disable_torch_init()
-    model_path = os.path.expanduser(model_path)
-    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_path, torch_dtype=torch.float16
-    ).cuda()
+    logger.error("askOpenAI not implemented yet")
 
-    ans_jsons = []
-    for i, line in enumerate(tqdm(question_jsons)):
-        ques_json = json.loads(line)
-        idx = ques_json["question_id"]
-        qs = ques_json["text"]
-        conv = get_default_conv_template(model_id).copy()
-        conv.append_message(conv.roles[0], qs)
-        conv.append_message(conv.roles[1], None)
-        prompt = conv.get_prompt()
-        inputs = tokenizer([prompt])
-        output_ids = model.generate(
-            torch.as_tensor(inputs.input_ids).cuda(),
-            do_sample=True,
-            temperature=0.7,
-            max_new_tokens=1024,
-        )
-        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0]
-        skip_echo_len = compute_skip_echo_len(model_id, conv, prompt)
+    return "error"
 
-        outputs = outputs[skip_echo_len:].strip()
-        ans_id = shortuuid.uuid()
-        ans_jsons.append(
-            {
-                "question_id": idx,
-                "text": outputs,
-                "answer_id": ans_id,
-                "model_id": model_id,
-                "metadata": {},
-            }
-        )
-    return ans_jsons
+def askObabooga(model, question):
+    try:
+        params=model["metadata"]
+        server=model["params"]["oobabooga-server"]
+        question=question["text"]
+        prompt=model["params"]["prompt_template"].format(
+            question=question
+            )
+        logger.info("Asking {mid} on {server}: {prompt}".format(
+            mid=model["model_id"],
+            server=server,
+            prompt=prompt))
 
+        payload = json.dumps([prompt, params])
+
+        response = requests.post(f"http://{server}/run/textgen", json={
+            "data": [
+                payload
+            ]
+        }).json()
+
+        raw_reply = response["data"][0]
+        content = raw_reply[len(prompt):]
+        
+        return content
+
+    except Exception as e:
+        logger.error(e)
+        return "error"
+
+def get_model_answer(model, question):
+    if model["type"] == "OpenAI":
+        answer=askOpenAI(model, question)
+    elif model["type"] == "oobabooga-api":
+        answer=askObabooga(model, question)
+    else:
+        logger.error(f"unknown model type {mt}".format(mt=model["type"]))
+        quit()
+
+    # logger.info(answer)
+
+    answer_json= {
+        "question_id": question["question_id"],
+        "text": answer,
+        "answer_id": shortuuid.uuid(),
+        "model_id": model["model_id"],
+        "metadata": model["metadata"],
+    }
+
+    return answer_json
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-path", type=str, required=True)
     parser.add_argument("--model-id", type=str, required=True)
-    parser.add_argument("--question-file", type=str, required=True)
-    parser.add_argument("--answer-file", type=str, default="answer.jsonl")
-    parser.add_argument("--num-gpus", type=int, default=1)
+    parser.add_argument("--model-file", type=str, default="table/model.json")
+    parser.add_argument("--answer-file", type=str, default=None)
+    parser.add_argument("--question-file", type=str, default="table/question.json")
+    parser.add_argument("-k", "--openaikey", type=str)
     args = parser.parse_args()
 
-    ray.init()
+    oaikey = args.openaikey
+
+    if args.answer_file is None:
+        answer_file = "table/answer/answer_" + args.model_id.replace(":","_") + ".jsonl"
+    else:
+        answer_file=args.answer_file
+
     run_eval(
-        args.model_path,
         args.model_id,
+        args.model_file,
         args.question_file,
-        args.answer_file,
-        args.num_gpus,
+        answer_file
     )

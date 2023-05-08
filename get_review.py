@@ -14,13 +14,11 @@ import logging
 from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
 
 logFormatter = logging.Formatter("%(asctime)s %(message)s")
 logger = logging.getLogger()
 
-
-logger_logfn = "log_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+logger_logfn = "log_getReview_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 fileHandler = logging.FileHandler("{0}/{1}.log".format("./logs/", logger_logfn))
 fileHandler.setFormatter(logFormatter)
 logger.addHandler(fileHandler)
@@ -77,7 +75,7 @@ def get_eval_OOB(reviewer, prompt: str, max_tokens: int):
         raw_reply = response["data"][0]
         content = raw_reply[len(prompt):]
 
-        logger.info(content)
+        # logger.info(content)
         return content
         # except Exception as e:
         #     logger.error(e)
@@ -95,9 +93,9 @@ def parse_score(review, reviewer):
 
         return [float(mg[0]), float(mg[1])]
     except Exception as e:
-        logger.error(
-            f"{e}\nContent: {review}\n" "You must manually fix the score pair."
-        )
+        # logger.error(
+        #     f"{e}\nContent: {review}\n" "You must manually fix the score pair."
+        # )
         return [-1, -1]
 
 def gen_prompt(reviewer, ques, cat, ans1, ans2):
@@ -136,12 +134,7 @@ if __name__ == "__main__":
     parser.add_argument("-k", "--openaikey", type=str)
     parser.add_argument("-dr", "--do-repetitions", type=int, default=1)
     parser.add_argument("-lc", "--limit-category", type=str, default=None)
-    parser.add_argument(
-        "--max-tokens",
-        type=int,
-        default=1024,
-        help="maximum number of tokens produced in the output",
-    )
+    parser.add_argument("--max-tokens", type=int, default=1024)
     args = parser.parse_args()
 
     oaikey = args.openaikey
@@ -169,7 +162,7 @@ if __name__ == "__main__":
         logger.info(f"Doing repetition {rep+1} of {args.do_repetitions}")
 
         # for i in question_idx_list:
-        for i in range(10):
+        for i in [21]:
             assert (
                 answer1_jsons[i]["question_id"]
                 == question_jsons[i]["question_id"]
@@ -212,9 +205,6 @@ if __name__ == "__main__":
                 }
             )
 
-            # print("#### PROMPT " + prompt )
-            # print("#### REVIEW " + review )
-
             logger.info("Review for question {qid}, {m1} vs. {m2}, reviewer {reviewer}. Scores: A1: {s1}, A2 {s2}. Review: {review}".format(
                 qid=question_jsons[i]["question_id"],
                 reviewer=reviewer["reviewer_id"],
@@ -225,8 +215,13 @@ if __name__ == "__main__":
                 m2=answer2_jsons[i]["model_id"]
                 ))
 
+
+            # print("#### PROMPT " + prompt )
+            print("#### REVIEW for question {}\n{}".format(question_jsons[i]["question_id"],review) )
+
+
             # To avoid the rate limit set by OpenAI
-            logger.info(f"Waiting for {REQ_TIME_GAP} seconds before sending the next request.")
+            # logger.info(f"Waiting for {REQ_TIME_GAP} seconds before sending the next request.")
             # time.sleep(10)
 
         outfn=args.output_review_file if rep==0 else args.output_review_file + "_" + str(rep)
