@@ -86,17 +86,32 @@ def get_eval_OOB(reviewer, prompt: str, max_tokens: int):
 def parse_score(review, reviewer):
     try:
         regex = reviewer["score-regex"]
-
         matches = re.search(regex, review)
-
         mg = matches.groups()
 
         return [float(mg[0]), float(mg[1])]
     except Exception as e:
-        # logger.error(
-        #     f"{e}\nContent: {review}\n" "You must manually fix the score pair."
-        # )
         return [-1, -1]
+
+def parse_winner(review, reviewer):
+    try:
+        regex = "Winner:.*([12])"
+        matches = re.search(regex, review)
+
+        if matches is None: 
+            matches = re.search(".*(Tie)", review)
+            mg = matches.groups()
+
+            if mg[0]=="Tie":
+                return 0
+        else:
+            mg = matches.groups()
+
+            return int(mg[0])
+    except Exception as e:
+        return -1
+    return -1
+
 
 def gen_prompt(reviewer, ques, cat, ans1, ans2):
     prompt_template = reviewer["prompt_templates"][cat] if cat in reviewer["prompt_templates"] else reviewer["prompt_templates"]["default"]
@@ -161,8 +176,8 @@ if __name__ == "__main__":
     for rep in range(args.do_repetitions):
         logger.info(f"Doing repetition {rep+1} of {args.do_repetitions}")
 
-        # for i in question_idx_list:
-        for i in [21]:
+        for i in question_idx_list:
+        # for i in [21]:
             assert (
                 answer1_jsons[i]["question_id"]
                 == question_jsons[i]["question_id"]
@@ -201,7 +216,8 @@ if __name__ == "__main__":
                     "reviewer_id": reviewer["reviewer_id"],
                     "metadata": reviewer["metadata"],
                     "text": review,
-                    "scores": parse_score(review, reviewer)
+                    "scores": parse_score(review, reviewer),
+                    "winner": parse_winner(review, reviewer)
                 }
             )
 
@@ -217,7 +233,11 @@ if __name__ == "__main__":
 
 
             # print("#### PROMPT " + prompt )
-            print("#### REVIEW for question {}\n{}".format(question_jsons[i]["question_id"],review) )
+            print("#### REVIEW for question {} (Winner: {})\n{}".format(
+                question_jsons[i]["question_id"],
+                review_jsons[len(review_jsons)-1]["winner"],
+                review
+                ))
 
 
             # To avoid the rate limit set by OpenAI
