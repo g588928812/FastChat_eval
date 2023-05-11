@@ -167,14 +167,22 @@ if __name__ == "__main__":
         reviewer=reviewers[0]
 
     # check if # of questions, answers are the same
-    # assert len(question_jsons) == len(answer1_jsons) == len(answer2_jsons)
+    assert len(question_jsons) == len(answer1_jsons) == len(answer2_jsons)
 
     review_jsons = []
     total_len = len(question_jsons)
     question_idx_list = list(range(total_len))
 
+    logger.info("Reviewing {} vs {}, judged by {}".format(args.answer_file_list[0], args.answer_file_list[1],reviewer["reviewer_id"]))
+
+
     for rep in range(args.do_repetitions):
         logger.info(f"Doing repetition {rep+1} of {args.do_repetitions}")
+
+        output_fn= f"{args.output_review_file}.jsonl" if rep==0 else f"{args.output_review_file}_{str(rep)}.jsonl"
+        if os.path.exists(output_fn):
+            logger.info(f"Output file {output_fn} already exists, skipping")
+            continue
 
         for i in question_idx_list:
         # for i in [21]:
@@ -242,12 +250,9 @@ if __name__ == "__main__":
 
             # To avoid the rate limit set by OpenAI
             # logger.info(f"Waiting for {REQ_TIME_GAP} seconds before sending the next request.")
-            # time.sleep(10)
+            time.sleep(1)
 
-        outfn=args.output_review_file if rep==0 else args.output_review_file + "_" + str(rep)
-        outfn=outfn + ".jsonl"
-
-        logger.info(f"writing output of {model1} vs {model2} to file {outfn}")
-        with open(f"{outfn}", "w+") as output_review_file:
+        logger.info(f"writing output of {model1} vs {model2} to file {output_fn}")
+        with open(f"{output_fn}", "w+") as output_review_file:
             for review in review_jsons:
                 output_review_file.write(json.dumps(review) + "\n")

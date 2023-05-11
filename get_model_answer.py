@@ -85,7 +85,8 @@ def askObabooga(model, question):
 
         raw_reply = response["data"][0]
         content = raw_reply[len(prompt):]
-        
+        logger.info(content)
+
         return content
 
     except Exception as e:

@@ -55,9 +55,7 @@ if __name__ == "__main__":
     model=args.model
 
     model_scores={}
-    # wins={"overall": 0}
-    # ties={"overall": 0}
-    # total_comparisons={"overall": 0}
+    nowinner=0
     for i in range(len(reviews_json)):
         answers=[]
         answers.append(next(item for item in answers_json if item["answer_id"] == reviews_json[i]["answer1_id"]))
@@ -68,14 +66,9 @@ if __name__ == "__main__":
         winner=reviews_json[i]["winner"]
 
         if not model1 in model_scores:
-            model_scores[model1]={
-                "wins":0, "ties":0, "overall":0
-            }        
+            model_scores[model1]={"wins":0, "ties":0, "overall":0}        
         if not model2 in model_scores:
-            model_scores[model2]={
-                "wins":0, "ties":0, "overall":0
-            }        
-
+            model_scores[model2]={"wins":0, "ties":0, "overall":0}        
 
         if winner==0:
             model_scores[model1]["ties"]+=1
@@ -84,25 +77,20 @@ if __name__ == "__main__":
             model_scores[model1]["wins"]+=1
         elif winner==2:
             model_scores[model2]["wins"]+=1
+        elif winner==-1:
+            nowinner+=1
+            continue
         else:
+            log.error(f"Unknown winner value: {winner}")
             continue
 
         model_scores[model1]["overall"]+=1
         model_scores[model2]["overall"]+=1
 
-
-        # print("Review #{i}/{total}: {model1} ({score1}) versus {model2} ({score2})".format(
-        #     i=i,
-        #     total=len(reviews_json),
-        #     model1=answers[0]["model_id"],
-        #     model2=answers[1]["model_id"],
-        #     score1=scores[0],
-        #     score2=scores[1]
-        #     ))
-
+    print("WINRATE")
     for model in model_scores:
         # print(f"Model {model}")
-        print("Model {model}: {rate}% ({wins}/{total}), ties: {ties}".format(
+        print("Model {model}\t{rate}%\t({wins}/{total})\tties:\t{ties}".format(
             model=model,
             wins=model_scores[model]["wins"],
             ties=model_scores[model]["ties"],
@@ -110,14 +98,13 @@ if __name__ == "__main__":
             total=model_scores[model]["overall"]
             ))
 
-    # print("Model {model} OVERALL: {rate}% ({wins}/{total}), ties: {ties}".format(
-    #     model=model,
-    #     wins=wins["overall"],
-    #     ties=ties["overall"],
-    #     rate=wins["overall"]/total*100,
-    #     total=total
-    #     ))
+    print("\nWINNING PERCENTAGE")
+    for model in model_scores:
+        # print(f"Model {model}")
+        print("Model {model}\t{rate}".format(
+            model=model,
+            rate=(2*model_scores[model]["wins"]+model_scores[model]["ties"])/(2*model_scores[model]["overall"])*100,
+            ))
 
-
-
+    print(f"\nWinner could not be determined in {nowinner} cases")
 
