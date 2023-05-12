@@ -128,6 +128,7 @@ def get_json_list(file_path):
         json_list = []
         for line in f:
             json_list.append(json.loads(line, strict=False))
+        f.close()
         return json_list
 
 def import_json(file_path):
@@ -169,7 +170,6 @@ if __name__ == "__main__":
     # check if # of questions, answers are the same
     assert len(question_jsons) == len(answer1_jsons) == len(answer2_jsons)
 
-    review_jsons = []
     total_len = len(question_jsons)
     question_idx_list = list(range(total_len))
 
@@ -177,6 +177,8 @@ if __name__ == "__main__":
 
 
     for rep in range(args.do_repetitions):
+        review_jsons = []
+    
         logger.info(f"Doing repetition {rep+1} of {args.do_repetitions}")
 
         output_fn= f"{args.output_review_file}.jsonl" if rep==0 else f"{args.output_review_file}_{str(rep)}.jsonl"
@@ -185,7 +187,6 @@ if __name__ == "__main__":
             continue
 
         for i in question_idx_list:
-        # for i in [21]:
             assert (
                 answer1_jsons[i]["question_id"]
                 == question_jsons[i]["question_id"]
@@ -214,6 +215,8 @@ if __name__ == "__main__":
                 logger.error("unknown reviewer type " + reviewer["type"])
                 quit()
 
+            winner = parse_winner(review, reviewer)
+
             review_id = shortuuid.uuid()
             review_jsons.append(
                 {
@@ -225,27 +228,23 @@ if __name__ == "__main__":
                     "metadata": reviewer["metadata"],
                     "text": review,
                     "scores": parse_score(review, reviewer),
-                    "winner": parse_winner(review, reviewer)
+                    "winner": winner 
                 }
             )
 
-            logger.info("Review for question {qid}, {m1} vs. {m2}, reviewer {reviewer}. Scores: A1: {s1}, A2 {s2}. Review: {review}".format(
+            logger.info("Review for question {qid}, {m1} vs. {m2}, reviewer {reviewer}. Winner: {winner}".format(
                 qid=question_jsons[i]["question_id"],
                 reviewer=reviewer["reviewer_id"],
                 review="",
                 s1=review_jsons[len(review_jsons)-1]["scores"][0],
                 s2=review_jsons[len(review_jsons)-1]["scores"][1],
                 m1=answer1_jsons[i]["model_id"],
-                m2=answer2_jsons[i]["model_id"]
+                m2=answer2_jsons[i]["model_id"],
+                winner=winner
                 ))
 
 
             # print("#### PROMPT " + prompt )
-            print("#### REVIEW for question {} (Winner: {})\n{}".format(
-                question_jsons[i]["question_id"],
-                review_jsons[len(review_jsons)-1]["winner"],
-                review
-                ))
 
 
             # To avoid the rate limit set by OpenAI
@@ -256,3 +255,4 @@ if __name__ == "__main__":
         with open(f"{output_fn}", "w+") as output_review_file:
             for review in review_jsons:
                 output_review_file.write(json.dumps(review) + "\n")
+            output_review_file.close()

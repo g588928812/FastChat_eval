@@ -44,7 +44,6 @@ if __name__ == "__main__":
         answer["model_id"]=answer["model_id"]+"-shifted"
         answer["question_id"]=(answer["question_id"]+1) if (answer["question_id"]+1) <= len(answer_jsons) else 1
 
-
     with open(os.path.expanduser(args.output_answer_file), "w") as ans_file:
         for line in answer_jsons:
             ans_file.write(json.dumps(line) + "\n")

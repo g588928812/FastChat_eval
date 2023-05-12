@@ -3,13 +3,13 @@ cmd_str="python3 get_review.py -r \"gpt-3.5-pairwise\" -a table/answer/answer_{m
 
 
 models=[]
-models.append("alpaca-13b")
-models.append("bard")
 models.append("gpt35-shifted")
 models.append("gpt35")
+models.append("bard")
 models.append("llama-13b")
-models.append("oasst-sft-7-llama-30b-4bit-128g")
+models.append("alpaca-13b")
 models.append("vicuna-13b")
+models.append("oasst-sft-7-llama-30b-4bit-128g")
 models.append("oasst-rlhf-2-llama-30b-7k-steps-4bit-128g")
 models.append("pythia-12b-sft-v8-7k-steps")
 

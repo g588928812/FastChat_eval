@@ -40,17 +40,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ChatGPT-based QA evaluation.")
     parser.add_argument("-m", "--model", default=None)
     parser.add_argument("-r", "--review-dir", default=None)
-    parser.add_argument("-rf", "--review-file", default=None)
     parser.add_argument("-a", "--answer-dir", default="table/answer")
     args = parser.parse_args()
 
-    assert((args.review_dir != None or args.review_file != None) and args.answer_dir != None)
+    assert(args.review_dir != None and args.answer_dir != None)
 
-    if args.review_file != None:
-        reviews_json = get_json_list(args.review_file)
-    else:
-        reviews_json = get_json_list_dir(args.review_dir)
-
+    reviews_json = get_json_list_dir(args.review_dir)
     answers_json = get_json_list_dir(args.answer_dir)
     model=args.model
 
@@ -87,24 +82,13 @@ if __name__ == "__main__":
         model_scores[model1]["overall"]+=1
         model_scores[model2]["overall"]+=1
 
-    print("WINRATE")
+    # print("WINNING PERCENTAGE")
     for model in model_scores:
         # print(f"Model {model}")
-        print("Model {model}\t{rate}%\t({wins}/{total})\tties:\t{ties}".format(
-            model=model,
-            wins=model_scores[model]["wins"],
-            ties=model_scores[model]["ties"],
-            rate=model_scores[model]["wins"]/model_scores[model]["overall"]*100,
-            total=model_scores[model]["overall"]
-            ))
-
-    print("\nWINNING PERCENTAGE")
-    for model in model_scores:
-        # print(f"Model {model}")
-        print("Model {model}\t{rate}".format(
+        print("{model}\t{rate}".format(
             model=model,
             rate=(2*model_scores[model]["wins"]+model_scores[model]["ties"])/(2*model_scores[model]["overall"])*100,
             ))
 
-    print(f"\nWinner could not be determined in {nowinner} cases")
+    # print(f"\nWinner could not be determined in {nowinner} cases")
 
