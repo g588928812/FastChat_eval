@@ -1,6 +1,7 @@
 # Turning FastChat upside down to benchmark open-source LLMs
 
 ![ab](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*b3sO0UT6JgpNOyCY1bL1HA.png)
+**Winning percentage of an all-against-all competition of Open Assistant, Vicuna, ChatGPT, Alpaca and the LLaMA base model.** 70 questions asked to each model. Answers evaluated by GPT-3.5 (API). Shown are averages and error-bars of 3–5 replicates per model (OA Pythia: 3, others: 5 replicates). Control: GPT-3.5 answers “shifted” = answers not related to question asked.
 
 https://medium.com/@geronimo7/open-source-chatbots-in-the-wild-9a44d7a41a48
 
