@@ -40,21 +40,28 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ChatGPT-based QA evaluation.")
     parser.add_argument("-r", "--review-dir", default="table/reviews_pairwise")
     parser.add_argument("-a", "--answer-dir", default="table/answer")
+    parser.add_argument("-e", "--exclude-math-code-questions", type=bool, default=True)
     args = parser.parse_args()
 
     assert(args.review_dir != None and args.answer_dir != None)
 
     reviews_json = get_json_list_dir(args.review_dir)
     answers_json = get_json_list_dir(args.answer_dir)
-    # model=args.model
 
-    # model_scores={}
-    # nowinner=0
+    if args.exclude_math_code_questions:
+        print("Excluding math questions")
+        questions_exclude=[61, 62, 63, 64, 65, 66, 67, 68, 69, 70]
+    else:
+        questions_exclude=[]
 
     model_reviews=[]
     for i in range(len(reviews_json)):      # assign reviews to each model, check if there are replicates
-        answers=[]
         review=reviews_json[i]
+
+        if review["question_id"] in questions_exclude:
+            continue
+
+        answers=[]
         answers.append(next(item for item in answers_json if item["answer_id"] == review["answer1_id"]))
         answers.append(next(item for item in answers_json if item["answer_id"] == review["answer2_id"]))
         scores = review["scores"]
@@ -66,8 +73,6 @@ if __name__ == "__main__":
             ans2=answers[1]
             answer_pair=answers[0]["answer_id"]+answers[1]["answer_id"]
 
-            # model_found=next(m for m in model_reviews if m["model_id"] == model)
-
             model_reviews_found = list(filter(lambda model_reviews: model_reviews["model_id"] == model, model_reviews))
 
             if len(model_reviews_found)==0:
@@ -78,7 +83,6 @@ if __name__ == "__main__":
                 model_reviews.append(model_review)
             else:
                 model_review=model_reviews_found[0]
-            del model_reviews_found
 
             if len(model_review["replicates"])==0:
                 model_review["replicates"].append([review])
@@ -116,7 +120,7 @@ if __name__ == "__main__":
                 print("{}\trep{}\t{}\t{}".format(model, replicateNo,othermodel, counts[othermodel]))  
 
     # winrate for each model and replicate
-    print("WINRATES")
+    print("\nWINRATES")
     for i in range(len(model_reviews)):      
         model=model_reviews[i]["model_id"]
         replicates=model_reviews[i]["replicates"]
@@ -132,7 +136,6 @@ if __name__ == "__main__":
                 answers=[]
                 answers.append(next(item for item in answers_json if item["answer_id"] == review["answer1_id"]))
                 answers.append(next(item for item in answers_json if item["answer_id"] == review["answer2_id"]))
-                # scores = review["scores"]
                 model1=answers[0]["model_id"]
                 model2=answers[1]["model_id"]
                 winner=review["winner"]
@@ -148,10 +151,10 @@ if __name__ == "__main__":
 
                 scores["overall"]+=1
 
-            print("{model}\treplicate{rep}\t{rate}\t(n={q} total comparisons)".format(
+            print("{model}\treplicate{rep}\t{rate}".format(
                 model=model,
                 rep=replicateNo,
-                rate=(2*scores["wins"]+scores["ties"])/(2*scores["overall"])*100,
+                rate=round((2*scores["wins"]+scores["ties"])/(2*scores["overall"])*100,3),
                 q=len(scores)
                 ))
             # print("Winner could not be determined in {} cases".format(scores["notParsed"]))
