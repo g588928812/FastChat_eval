@@ -5,8 +5,11 @@ import shortuuid
 import logging
 import requests
 from tqdm import tqdm
+import openai
+
 
 from datetime import datetime
+import time
 
 logging.basicConfig(level=logging.INFO)
 
@@ -58,9 +61,29 @@ def run_eval(model_id, model_file, question_file, answer_file):
 def askOpenAI(model, question):
     assert(oaikey is not None)
 
-    logger.error("askOpenAI not implemented yet")
+    openai.api_key = oaikey
 
-    return "error"
+    for _ in range(10):
+        try:
+            response = openai.ChatCompletion.create(
+                model=model["model_name"],
+                temperature=model["metadata"]["temperature"],
+                max_tokens=model["metadata"]["max_tokens"],
+                messages=[
+                    {
+                        "role": "user",
+                        "content": question["text"],
+                    },
+                ],
+            )
+            answer = response["choices"][0]["message"]["content"]
+
+            return answer
+        except Exception as e:
+            logger.error(f"Error while askOpenAI: {e}")
+            time.sleep(5)
+
+    return "error, tried 10 times" 
 
 def askObabooga(model, question):
     try:
@@ -102,7 +125,7 @@ def get_model_answer(model, question):
         logger.error(f"unknown model type {mt}".format(mt=model["type"]))
         quit()
 
-    # logger.info(answer)
+    logger.info(answer)
 
     answer_json= {
         "question_id": question["question_id"],

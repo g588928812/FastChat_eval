@@ -95,23 +95,34 @@ def parse_score(review, reviewer):
 
 def parse_winner(review, reviewer):
     try:
-        regex = "Winner:.*([12])"
-        matches = re.search(regex, review)
+        core_pattern="[wW]inner:?[\\w ]*([tT]ie|[12])"
 
-        if matches is None: 
-            matches = re.search(".*(Tie)", review)
-            mg = matches.groups()
+        regexs=[]
+        regexs.append("^{}.? *$".format(core_pattern))  
+        regexs.append("\n{}.? *$".format(core_pattern))  
+        regexs.append("^{}.? *\n".format(core_pattern))  
+        regexs.append("^{}.".format(core_pattern))  
+        regexs.append("{}.? *$".format(core_pattern))  
+        regexs.append("\n{}.? *".format(core_pattern))  
+        regexs.append("a? ?([tT]ie|[12]).?$")
+        regexs.append("^[wW]inner:?[\\w ]*([nN]either|[nN]one)")
+        regexs.append("{}".format(core_pattern))  
 
-            if mg[0]=="Tie":
-                return 0
-        else:
-            mg = matches.groups()
+        for regex in regexs:
+            matches = re.search(regex, review)
 
-            return int(mg[0])
+            if matches is not None: 
+                mg = matches.groups()
+
+                if mg[0].isnumeric():
+                    return int(mg[0])
+                elif mg[0].lower()=="tie" or mg[0].lower()=="neither" or mg[0].lower()=="none":
+                    return 0
+                else:
+                    return -1
     except Exception as e:
+        print(e)
         return -1
-    return -1
-
 
 def gen_prompt(reviewer, ques, cat, ans1, ans2):
     prompt_template = reviewer["prompt_templates"][cat] if cat in reviewer["prompt_templates"] else reviewer["prompt_templates"]["default"]
@@ -156,8 +167,8 @@ if __name__ == "__main__":
     oaikey = args.openaikey
     question_jsons = import_json(args.question_file)
     reviewer_jsons = import_json(args.reviewer_file)
-    answer1_jsons = get_json_list(args.answer_file_list[0])
-    answer2_jsons = get_json_list(args.answer_file_list[1])
+    answer1_jsons = get_json_list(args.answer_file_list[0].replace(":","_"))
+    answer2_jsons = get_json_list(args.answer_file_list[1].replace(":","_"))
 
     reviewers = list(filter(lambda reviewer_jsons: reviewer_jsons['reviewer_id'] == args.reviewer, reviewer_jsons))
 
