@@ -11,8 +11,8 @@ models.append("oasst-sft-7-llama-30b-4bit-128g")
 models.append("vicuna-13b")
 models.append("oasst-rlhf-2-llama-30b-7k-steps-4bit-128g")
 models.append("pythia-12b-sft-v8-7k-steps")
-
-
+models.append("guanaco-33B-GPTQ")
+models.append("Wizard-Vicuna-30B-Uncensored-GPTQ")
 
 for i in range(len(models)):
 	for f in list(range(len(models)))[i+1:]:

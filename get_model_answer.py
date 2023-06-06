@@ -87,30 +87,28 @@ def askOpenAI(model, question):
 
 def askObabooga(model, question):
     try:
-        params=model["metadata"]
         server=model["params"]["oobabooga-server"]
-        question=question["text"]
-        prompt=model["params"]["prompt_template"].format(
-            question=question
-            )
-        logger.info("Asking {mid} on {server}: {prompt}".format(
-            mid=model["model_id"],
-            server=server,
-            prompt=prompt))
+        params=model["metadata"]
+        prompt=model["params"]["prompt_template"].format(question=question["text"])
 
-        payload = json.dumps([prompt, params])
+        URI=f"{server}/api/v1/generate"
 
-        response = requests.post(f"http://{server}/run/textgen", json={
-            "data": [
-                payload
-            ]
-        }).json()
+        request = {
+            'prompt': prompt
+        }
 
-        raw_reply = response["data"][0]
-        content = raw_reply[len(prompt):]
-        logger.info(content)
+        for p in params:
+            request[p]=params[p]   
 
-        return content
+        response = requests.post(URI, json=request)
+
+        if response.status_code == 200:
+            raw_reply = response.json()['results'][0]['text']
+            content = raw_reply
+            logger.info(content)
+            return content
+        else:
+            logger.error("Error in POST, Status code {response.status_code}")
 
     except Exception as e:
         logger.error(e)
@@ -124,8 +122,6 @@ def get_model_answer(model, question):
     else:
         logger.error(f"unknown model type {mt}".format(mt=model["type"]))
         quit()
-
-    logger.info(answer)
 
     answer_json= {
         "question_id": question["question_id"],
