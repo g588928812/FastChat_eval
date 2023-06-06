@@ -1,0 +1,191 @@
+[
+	{
+		"model_id": "gpt-4:20230517", 
+		"model_name": "gpt-4", 
+		"model_version": "20230517", 
+		"model_metadata": "OpenAI ChatGPT gpt-4",
+        "type": "OpenAI", 
+        "metadata": 
+        {
+        	"temperature": 0.7, 
+        	"max_tokens": 1024
+        }
+	},
+	{
+		"model_id": "gpt-3.5-turbo:20230327", 
+		"model_name": "gpt-3.5-turbo", 
+		"model_version": "20230327", 
+		"model_metadata": "OpenAI ChatGPT gpt-3.5-turbo Chat Completion",
+        "type": "OpenAI", 
+        "metadata": 
+        {
+        	"temperature": 0.7, 
+        	"max_tokens": 1024
+        }
+	},
+	{
+		"model_id": "guanaco-33B-GPTQ", 
+		"model_name": "guanaco-33B-GPTQ", 
+		"model_version": "guanaco-33B-GPTQ download+inference 4.6.", 
+        "type": "oobabooga-api", 
+        "params": {
+        	"oobabooga-server": "http://192.168.8.73:5000",
+        	"prompt_template": "A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.\n### Human: {question}\n### Assistant:"
+
+        }, 
+        "metadata": {
+        	"temperature": 0.75, 
+        	"max_new_tokens": 1024,
+        	"do_sample": true,
+	        "top_p": 0.95,
+	        "top_k": 50,
+	        "early_stopping": false,
+    	    "ban_eos_token": false,
+        	"skip_special_tokens": true,
+	        "repetition_penalty": 1.2,
+    	    "encoder_repetition_penalty": 1.0,
+            "stopping_strings": []
+        }
+	},
+	{
+		"model_id": "guanaco-65B-GPTQ", 
+		"model_name": "guanaco-65B-GPTQ", 
+		"model_version": "guanaco-65B-GPTQ (4bit)", 
+        "type": "oobabooga-api", 
+        "params": {
+        	"oobabooga-server": "http://192.168.8.73:5000",
+        	"prompt_template": "A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.\n### Human: {question}\n### Assistant:"
+
+        }, 
+        "metadata": {
+        	"temperature": 0.75, 
+        	"max_new_tokens": 1024,
+        	"do_sample": true,
+	        "top_p": 0.95,
+	        "top_k": 50,
+	        "early_stopping": false,
+    	    "ban_eos_token": false,
+        	"skip_special_tokens": true,
+	        "repetition_penalty": 1.2,
+    	    "encoder_repetition_penalty": 1.0,
+            "stopping_strings": []
+        }
+	},
+	{
+		"model_id": "Wizard-Vicuna-30B-Uncensored-GPTQ", 
+		"model_name": "Wizard-Vicuna-30B-Uncensored-GPTQ", 
+		"model_version": "Wizard-Vicuna-30B-Uncensored-GPTQ", 
+        "type": "oobabooga-api", 
+        "params": {
+        	"oobabooga-server": "http://192.168.8.73:5000",
+        	"prompt_template": "USER: {question}\nASSISTANT:"
+        }, 
+        "metadata": {
+        	"temperature": 0.75, 
+        	"max_new_tokens": 1024,
+        	"do_sample": true,
+	        "top_p": 0.95,
+	        "top_k": 50,
+	        "early_stopping": false,
+    	    "ban_eos_token": false,
+        	"skip_special_tokens": true,
+	        "repetition_penalty": 1.2,
+    	    "encoder_repetition_penalty": 1.0,
+            "stopping_strings": []
+        }
+	},
+	{
+		"model_id": "oasst-falcon-40b-sft-top1-560", 
+		"model_name": "oasst-falcon-40b-sft-top1-560", 
+		"model_version": "oasst-falcon-40b-sft-top1-560", 
+        "type": "oobabooga-api", 
+        "params": {
+        	"oobabooga-server": "http://192.168.8.73:5000",
+        	"prompt_template": "<|prompter|>{question}<|endoftext|><|assistant|>"
+        }, 
+        "metadata": {
+        	"temperature": 0.75, 
+        	"max_new_tokens": 1024,
+        	"do_sample": true,
+	        "top_p": 0.95,
+	        "top_k": 50,
+	        "typical_p": 1,
+	        "early_stopping": false,
+    	    "ban_eos_token": false,
+        	"skip_special_tokens": true,
+	        "repetition_penalty": 1.2,
+    	    "encoder_repetition_penalty": 1.0
+        }
+	},
+	{
+		"model_id": "oasst-rlhf-2-llama-30b-7k-steps-4bit-128g", 
+		"model_name": "oasst-rlhf-2-llama-30b-7k-steps-4bit-128g", 
+		"model_version": "oasst-rlhf-2-llama-30b-7k-steps-4bit-128g", 
+        "type": "oobabooga-api", 
+        "params": {
+        	"oobabooga-server": "192.168.8.102:7860",
+        	"prompt_template": "<|prompter|>{question}</s><|assistant|>"
+
+        }, 
+        "metadata": {
+        	"temperature": 0.75, 
+        	"max_new_tokens": 1024,
+        	"do_sample": true,
+	        "top_p": 0.95,
+	        "top_k": 50,
+	        "typical_p": null,
+	        "early_stopping": false,
+    	    "ban_eos_token": false,
+        	"skip_special_tokens": true,
+	        "repetition_penalty": 1.2,
+    	    "encoder_repetition_penalty": 1.0
+        }
+	},
+	{
+		"model_id": "pythia-12b-sft-v8-7k-steps", 
+		"model_name": "pythia-12b-sft-v8-7k-steps", 
+		"model_version": "pythia-12b-sft-v8-7k-steps", 
+        "type": "oobabooga-api", 
+        "params": {
+        	"oobabooga-server": "192.168.8.102:7860",
+        	"prompt_template": "<|prompter|>{question}<|endoftext|><|assistant|>"
+
+        }, 
+        "metadata": {
+        	"temperature": 0.75, 
+        	"max_new_tokens": 1024,
+        	"do_sample": true,
+	        "top_p": 0.95,
+	        "top_k": 50,
+	        "typical_p": null,
+	        "early_stopping": false,
+    	    "ban_eos_token": false,
+        	"skip_special_tokens": true,
+	        "repetition_penalty": 1.2,
+    	    "encoder_repetition_penalty": 1.0
+        }
+	},
+
+	{
+		"model_id": "vicuna-13b:20230322-clean-lang", 
+		"model_name": "vicuna-13b", 
+		"model_version": "20230322-clean-lang", 
+		"model_metadata": "vicuna-13b-20230322-clean-lang"
+	},
+	{	
+		"model_id": "alpaca-13b:v1", "model_name": "alpaca-13b", 
+		"model_version": "v1", 
+		"model_metadata": "alpaca-13b"
+	},
+	{
+		"model_id": "llama-13b:v1", 
+		"model_name": "llama-13b", 
+		"model_version": "v1", 
+		"model_metadata": "hf-llama-13b"
+	},
+	{
+		"model_id": "bard:20230327", 
+		"model_name": "bard", 
+		"model_version": "20230327", 
+		"model_metadata": "Google Bard 20230327"}
+]
