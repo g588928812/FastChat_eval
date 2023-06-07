@@ -47,7 +47,7 @@ def import_json_dir(dir_path, key):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-r", "--review-dir", default=None)
+    parser.add_argument("-r", "--review-dir", default="table/reviews_pairwise")
     args = parser.parse_args()
 
     assert(args.review_dir != None)
@@ -121,7 +121,8 @@ if __name__ == "__main__":
                 model2=answers[review["answer2_id"]]["model_id"]
 
                 unexpected_win=""
-                if review["winner"] > 0:
+
+                if review["winner"] is not None and review["winner"] > 0:
                     winner=model1 if review["winner"]==1 else model2
                     loser=model2 if review["winner"]==1 else model1
 
