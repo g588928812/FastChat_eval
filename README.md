@@ -1,7 +1,7 @@
 # Turning FastChat upside down to benchmark open-source LLMs
 
-![ab](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*rSGco9WTvKng04n8suN0fw.png)
-**Winning percentage of an all-against-all competition of Open Assistant, Vicuna, ChatGPT, Alpaca and the LLaMA base model.** 70 questions asked to each model. Answers evaluated by GPT-3.5 (API). Shown are averages and std. dev. of 3 replicates per model. Control: GPT-3.5 answers “shifted” = answers not related to question asked. Bottom: Human preference as Elo ratings, assessed in the LMSYS chatbot arena.
+![ab](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*qfpOLKWx8bG4pT15rupbXg.png)
+**Winning percentage of an all-against-all competition.** 70 questions asked to each model. Answers evaluated by GPT-3.5 (API). Shown are averages and std. dev. of 3 replicates per model. Control: GPT-3.5 answers “shifted” = answers not related to question asked. Bottom: Human preference as Elo ratings, assessed in the LMSYS chatbot arena.
 
 https://medium.com/@geronimo7/open-source-chatbots-in-the-wild-9a44d7a41a48
 
